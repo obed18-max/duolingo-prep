@@ -157,3 +157,4 @@ details summary{font-weight:600;cursor:pointer;min-height:28px}
 .bar{height:10px;background:var(--fill);border-radius:99px;overflow:hidden;margin:4px 0 10px}
 .bar i{display:block;height:100%;background:var(--accent)}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+.tw{cursor:pointer;border-radius:3px}.tw:active{background:var(--fill)}

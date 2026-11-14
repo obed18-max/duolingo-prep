@@ -29,7 +29,10 @@
       { name: 'Shadowing', icon: '🔁', sub: 'écoute, répète, compare', min: 5, run: d => M.speaking.shadowing({ onDone: d }) },
       { name: 'Faux amis', icon: '🎭', sub: 'actually, eventually, library…', min: 4, run: d => M.cognates.falseFriends({ onDone: d }) },
       { name: 'Prononciation', icon: '👄', sub: 'th, h, ship/sheep, accent de mot', min: 4, run: d => M.speaking.pronunciation({ onDone: d }) },
-      { name: 'Amorces de phrases', icon: '🧱', sub: 'pour écrire plus vite', min: 3, run: d => M.writing.starters({ onDone: d }) }
+      { name: 'Amorces de phrases', icon: '🧱', sub: 'pour écrire plus vite', min: 3, run: d => M.writing.starters({ onDone: d }) },
+      { name: 'Grammaire C1', icon: '📐', sub: M.learn.nextGrammar().t, min: 6, run: d => M.learn.grammar({ onDone: d }) },
+      { name: 'Vocabulaire académique', icon: '📚', sub: 'lot ' + ((A.S.seen.vocabLot || 0) + 1) + ' : 8 mots + quiz', min: 6, run: d => M.learn.vocab({ onDone: d }) },
+      { name: 'Histoire à Windsor', icon: '🏙️', sub: 'écoute, touche les mots, joue Obed', min: 6, run: d => M.extras.story({ onDone: d }) }
     ]);
     return [
       { id: 'rev', icon: '🔁', name: 'Révision', short: 'Révision', sub: rc.total ? rc.total + ' rappels dus + mini-quiz' : 'Mini-quiz mélangé', min: 5, run: d => M.review.start({ onDone: d }) },
@@ -70,11 +73,15 @@
       <div class="kpis"><div class="kpi"><b>🔥 ${S.streak.last >= A.addDays(A.today(), -1) ? S.streak.n : 0}</b><small class="muted">série</small></div>
         <div class="kpi"><b>${d.pts}</b><small class="muted">points aujourd'hui</small></div>
         <div class="kpi"><b>${A.srs.due().length}</b><small class="muted">rappels dus</small></div></div>
+      ${!S.profile.diag || A.daysBetween(S.profile.diag.d, A.today()) >= 14 ? `<button class="card row" id="tDiag" style="width:100%"><span class="ic" style="background:var(--green);color:#fff">🧭</span><span class="tx"><b>${S.profile.diag ? 'Refaire le diagnostic' : 'Faire le diagnostic'}</b><small class="muted">≈ 15 min · estime ton niveau par compétence</small></span><span class="chev">›</span></button>` : ''}
+      ${left >= 0 && left <= 2 && !(S.mocks || []).some(m => m.kind === 'mock' && A.daysBetween(m.d, A.today()) <= 3) ? `<button class="card row" id="tMock" style="width:100%"><span class="ic" style="background:var(--purple);color:#fff">🎓</span><span class="tx"><b>C'est le moment de l'examen blanc</b><small class="muted">≈ 1 h, dans les conditions du vrai test</small></span><span class="chev">›</span></button>` : ''}
       ${top.length ? `<div class="card"><h3>⚠️ Tes erreurs les plus fréquentes (7 jours)</h3>${top.map(([c, n]) => `<p>${(A.CATS[c] || ['', '•'])[1]} ${esc((A.CATS[c] || [c])[0])} · <b>${n}</b></p>`).join('')}<p class="muted">Pense à elles pendant les exercices d'aujourd'hui.</p></div>` : ''}
       <div class="card"><h3>Tes meilleurs sous-scores officiels</h3>
         ${[['reading', 'Lecture'], ['writing', 'Écriture'], ['speaking', 'Oral'], ['listening', 'Écoute']].map(([k, n]) => `<div style="display:flex;justify-content:space-between"><span>${n}</span><b style="color:${best[k] >= 120 ? 'var(--green)' : best[k] >= 105 ? 'var(--orange)' : 'var(--red)'}">${best[k]}</b></div><div class="bar"><i style="width:${(best[k] - 10) / 150 * 100}%"></i></div>`).join('')}
         <p class="muted">La lecture (95) est ta priorité : chaque jour, Fill in the Blanks + Read and Complete.</p></div>`;
     const b = A.$('#tGo', el); if (b) b.onclick = () => runStep(next);
+    const dg = A.$('#tDiag', el); if (dg) dg.onclick = () => A.modules.exam.diagnostic();
+    const mk = A.$('#tMock', el); if (mk) mk.onclick = () => A.modules.exam.mock();
     const m = A.$('#tMore', el); if (m) m.onclick = () => A.modules.ctest.rac({ n: 1 });
     A.$$('.row[data-k]', el).forEach(r => r.onclick = () => runStep(steps[+r.dataset.k]));
   }

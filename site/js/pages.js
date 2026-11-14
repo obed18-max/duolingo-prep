@@ -27,6 +27,18 @@
         ${row('📚', 'Cognats & faux amis : la liste', '', 'data-a="cogl"')}
         ${row('🧱', 'Amorces de phrases', 'pour écrire plus vite (Writing Sample)', 'data-a="starters"')}
       </div>
+      <div class="sect">Apprendre</div>
+      <div class="list">
+        ${row('📐', 'Grammaire C1', GRAMMAR.length + ' leçons · prochaine : ' + esc(A.modules.learn.nextGrammar().t), 'data-a="gram"')}
+        ${row('📚', 'Vocabulaire académique', VOCAB.length + ' mots · lot ' + ((A.S.seen.vocabLot || 0) + 1), 'data-a="voc"')}
+        ${row('⭐', 'Mes mots', Object.keys(A.S.mywords || {}).length + ' mots ajoutés depuis le dictionnaire', 'data-a="mywords"')}
+      </div>
+      <div class="sect">Pour le plaisir</div>
+      <div class="list">
+        ${row('🏙️', 'Histoire à Windsor', 'épisode ' + Math.min((A.S.seen.story || 0) + 1, 3) + '/3 · tu joues Obed', 'data-a="story"')}
+        ${row('🃏', 'Memory', 'anglais ↔ français', 'data-a="memory"')}
+        ${row('📞', 'Appel en direct', A.ai && A.ai.sample ? 'avec Claude : prof, discussion, jeu de rôle, oral du DET' : 'disponible dans la copie Claude', 'data-a="call"')}
+      </div>
       <div class="sect">Écriture · objectif de mots affiché</div>
       <div class="list">
         ${row('📝', 'Writing Sample', '30 s + 5 min · objectif 140 mots', 'data-a="wsample"')}
@@ -54,10 +66,26 @@
     const act = { fib: () => M.ctest.fib(), rac: () => M.ctest.rac({ n: 1 }), rs: () => M.cognates.readSelect(), tfib: () => M.lessons.tips('fib', 'Fill in the Blanks : la méthode'), trac: () => M.lessons.tips('rac', 'Read and Complete : la méthode'), mix: () => M.faults.mixed(), ff: () => M.cognates.falseFriends(), col: () => M.lessons.collocs(), cogl: () => M.cognates.sheet(), starters: starters,
       wsample: () => M.writing.sample(), iwrite: () => M.writing.interactive(), wphoto: () => M.writing.photo(), stdrill: () => M.writing.starters(), typing: () => M.writing.typing(),
       ispeak: () => M.speaking.interactive(), sphoto: () => M.speaking.photo(), rts: () => M.speaking.readThenSpeak(), ssample: () => M.speaking.sampleTalk(), shadow: () => M.speaking.shadowing(), pron: pronPick,
-      ltype: () => M.listening.listenType(), ilisten: () => M.listening.interactive(), iread: () => M.ireading.run() };
+      ltype: () => M.listening.listenType(), ilisten: () => M.listening.interactive(), iread: () => M.ireading.run(),
+      gram: gramPick, voc: () => M.learn.vocabList(), mywords: myWords, story: storyPick, memory: () => M.extras.memory(), call: () => M.extras.call() };
     A.$$('[data-a]', el).forEach(b => b.onclick = act[b.dataset.a]);
     A.$$('[data-f]', el).forEach(b => b.onclick = () => M.faults.family(FAULTS[+b.dataset.f]));
+    const map = document.createElement('div'); map.innerHTML = '<div class="sect">Carte du parcours · 24 unités (B2 → C2)</div><div id="units"></div>';
+    el.appendChild(map); M.extras.unitsPage(A.$('#units', el));
   };
+  function gramPick() {
+    const seen = A.S.seen.gram || {};
+    A.sheet(`<div class="shd"><h2>📐 Grammaire C1</h2>${close}</div><div class="list">${GRAMMAR.map(g => row(seen[g.id] ? (seen[g.id].best >= 4 ? '✅' : '🔁') : '📐', esc(g.t), seen[g.id] ? 'meilleur : ' + seen[g.id].best + '/6' : 'pas encore vue', 'data-g="' + g.id + '"')).join('')}</div>`,
+      b => A.$$('[data-g]', b).forEach(x => x.onclick = () => { A.closeSheet(); A.modules.learn.grammar({ id: x.dataset.g }); }));
+  }
+  function storyPick() {
+    A.sheet(`<div class="shd"><h2>🏙️ Histoire à Windsor</h2>${close}</div><div class="list">${A.modules.extras.STORY.map((e, k) => row(k < (A.S.seen.story || 0) ? '✅' : '📖', esc(e.t), esc(e.intro), 'data-e="' + k + '"')).join('')}</div>`,
+      b => A.$$('[data-e]', b).forEach(x => x.onclick = () => { A.closeSheet(); A.modules.extras.story({ ep: +x.dataset.e }); }));
+  }
+  function myWords() {
+    const my = A.S.mywords || {};
+    A.sheet(`<div class="shd"><h2>⭐ Mes mots</h2>${close}</div>${Object.keys(my).length ? `<div class="list">${Object.entries(my).map(([w, v]) => `<div class="row"><span class="tx"><b>${esc(w)}</b><small class="muted">${esc(v.fr || '')}</small></span><button class="icbtn" onclick="App.speak('${w.replace(/'/g, '')}')">▶</button></div>`).join('')}</div>` : '<p class="muted">Touche un mot dans l\'histoire à Windsor pour l\'ajouter ici.</p>'}`);
+  }
   function pronPick() {
     A.sheet(`<div class="shd"><h2>👄 Prononciation</h2>${close}</div><div class="list">${A.modules.speaking.PRON.map((p, k) => row('🔊', esc(p[0]), esc(p[1]), 'data-p="' + k + '"')).join('')}</div>`, b => A.$$('[data-p]', b).forEach(x => x.onclick = () => { A.closeSheet(); A.modules.speaking.pronunciation({ set: +x.dataset.p }); }));
   }
@@ -71,7 +99,9 @@
   A.pages.exam = el => {
     const ck = A.S.checklist, nOk = DET.checklist.filter(c => ck[c[0]]).length;
     el.innerHTML = `<h1>Examen</h1>
-      <div class="list">${row('⏱️', 'Section lecture · conditions réelles', 'Read and Select 15 + Fill in the Blanks 7 + Read and Complete 3, sans relecture guidée', 'data-a="real"', 'var(--accent);color:#fff')}
+      <div class="list">${row('🎓', 'Examen blanc complet', '≈ 1 h · 13 types dans l\'ordre · estimation sur 160', 'data-a="mock"', 'var(--purple);color:#fff')}
+        ${row('🧭', 'Diagnostic', '≈ 15 min · à refaire toutes les 2 semaines' + (A.S.profile.diag ? ' · dernier : ' + A.S.profile.diag.d : ''), 'data-a="diag"', 'var(--green);color:#fff')}
+        ${row('⏱️', 'Section lecture · conditions réelles', 'Read and Select 15 + Fill in the Blanks 7 + Read and Complete 3', 'data-a="real"', 'var(--accent);color:#fff')}
         ${row('🌐', 'Test d\'entraînement officiel (gratuit)', '≈ 45 min : connecte-toi sur le site officiel → Practice', 'data-a="official"')}</div>
       <div class="sect">Checklist du jour J · ${nOk}/${DET.checklist.length}</div>
       <div class="card">${DET.checklist.map(c => `<label class="check"><input type="checkbox" data-c="${c[0]}" ${ck[c[0]] ? 'checked' : ''}><span>${esc(c[1])}</span></label>`).join('')}</div>
@@ -85,21 +115,18 @@
       <p class="muted">Sources : Duolingo, Questions Guide 2026 et Scoring Guide 2026. Les scores de l'app sont des estimations d'entraînement, jamais des scores officiels.</p>`;
     A.$$('[data-c]', el).forEach(c => c.onchange = () => { A.S.checklist[c.dataset.c] = c.checked; A.save(); A.pages.exam(el); });
     A.$('[data-a="official"]', el).outerHTML = A.$('[data-a="official"]', el).outerHTML.replace('<button', '<a href="' + DET.practiceUrl + '" target="_blank" rel="noopener" style="color:inherit;text-decoration:none"').replace('</button>', '</a>');
-    A.$('[data-a="real"]', el).onclick = realReading;
+    A.$('[data-a="real"]', el).onclick = () => A.modules.exam.reading();
+    A.$('[data-a="mock"]', el).onclick = () => A.modules.exam.mock();
+    A.$('[data-a="diag"]', el).onclick = () => A.modules.exam.diagnostic();
+    if ((A.S.mocks || []).length) el.insertAdjacentHTML('beforeend', `<div class="sect">Mes examens blancs</div><div class="list">${A.S.mocks.slice().reverse().map(m => `<div class="row"><span class="tx"><b>${m.r.overall ?? '—'} · ${({ mock: 'Examen blanc', diag: 'Diagnostic', reading: 'Section lecture' })[m.kind]}</b><small class="muted">${m.d} · L ${m.r.read ?? '—'} · É ${m.r.listen ?? '—'} · Éc ${m.r.writing ?? '—'} · O ${m.r.speaking ?? '—'}</small></span></div>`).join('')}</div>`);
   };
-  async function realReading() {
-    if (!(await A.ask('Conditions réelles : chrono officiel, pas de relecture guidée, pas de retour en arrière. Environ 15 minutes. On y va ?', 'Commencer'))) return;
-    const keep = A.S.settings.reread; A.S.settings.reread = false;
-    const restore = () => { A.S.settings.reread = keep; A.save(); };
-    A.modules.cognates.readSelect({ n: 15, onDone: () => A.modules.ctest.fib({ n: 7, onDone: () => A.modules.ctest.rac({ n: 3, onDone: restore }) }) });
-    setTimeout(() => { if (!A.runner.active) restore(); }, 1000 * 60 * 30);
-  }
-
   /* ---------- Progrès ---------- */
   A.pages.progress = el => {
     const S = A.S, days = [];
     for (let i = 13; i >= 0; i--) days.push(A.addDays(A.today(), -i));
-    const acc = days.map(d => { const h = S.hist.filter(x => x.d === d && x.s === 'reading'); const n = h.reduce((a, x) => a + x.n, 0); return n ? Math.round(h.reduce((a, x) => a + x.ok, 0) / n * 100) : null; });
+    const accOf = sk => days.map(d => { const h = S.hist.filter(x => x.d === d && x.s === sk); const n = h.reduce((a, x) => a + x.n, 0); return n ? Math.round(h.reduce((a, x) => a + x.ok, 0) / n * 100) : null; });
+    const acc = accOf('reading');
+    const spark = (name, arr, col) => { const pts = arr.map((v, i) => v == null ? null : [i * 22 + 4, 56 - v * .5]).filter(Boolean); return `<div class="kpi" style="text-align:left"><small class="muted">${name}</small><svg viewBox="0 0 300 60" style="width:100%;height:50px"><polyline fill="none" stroke="${col}" stroke-width="3" stroke-linecap="round" points="${pts.map(p => p.join(',')).join(' ')}"/>${pts.map(p => `<circle cx="${p[0]}" cy="${p[1]}" r="3.5" fill="${col}"/>`).join('')}</svg><b style="font-size:1em">${[...arr].reverse().find(v => v != null) ?? '—'}${[...arr].reverse().find(v => v != null) != null ? ' %' : ''}</b></div>`; };
     const cats = A.topErrors(20);
     const last = S.errors.slice(-60).reverse();
     el.innerHTML = `<h1>Progrès</h1>
@@ -107,6 +134,9 @@
       <div class="card"><h3>Lecture : % de réponses justes (14 jours)</h3>
         <div style="display:flex;align-items:flex-end;gap:4px;height:120px;margin-top:10px">${acc.map((a, i) => `<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%"><small style="font-size:10px">${a == null ? '' : a}</small><div style="width:100%;border-radius:4px 4px 0 0;height:${a == null ? 2 : Math.max(4, a)}%;background:${a == null ? 'var(--fill)' : a >= 80 ? 'var(--green)' : a >= 60 ? 'var(--orange)' : 'var(--red)'}"></div><small style="font-size:9px" class="muted">${days[i].slice(8)}</small></div>`).join('')}</div>
         <p class="muted">Vise 80 % et plus en Fill in the Blanks et Read and Complete.</p></div>
+      <div class="sect">Par compétence (14 jours)</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">${spark('Lecture', acc, 'var(--accent)')}${spark('Écoute', accOf('listening'), 'var(--purple)')}${spark('Écriture (volume)', accOf('writing'), 'var(--orange)')}${spark('Oral (temps utilisé)', accOf('speaking'), 'var(--green)')}</div>
+      <div class="sect">Badges</div>${A.modules.extras.badges()}
       <div class="sect">Mes erreurs par type</div>
       <div class="card">${cats.length ? cats.map(([c, n]) => `<div style="display:flex;justify-content:space-between"><span>${(A.CATS[c] || ['', '•'])[1]} ${esc((A.CATS[c] || [c])[0])}</span><b>${n}</b></div><div class="bar"><i style="width:${n / cats[0][1] * 100}%;background:var(--red)"></i></div>`).join('') : '<p class="muted">Pas encore d\'erreur notée.</p>'}</div>
       <div class="sect">Carnet d'erreurs (dernières)</div>

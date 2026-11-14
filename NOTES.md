@@ -28,6 +28,15 @@
 - `js/modules/review.js` : révision des éléments dus (mots ratés replacés dans leur phrase).
 - `js/data/*.js` : contenus. Ajouter du contenu = ajouter des lignes ici (ids uniques, jamais réutilisés).
 
+## Modules ajoutés (v1.2–1.3)
+- `modules/prod.js` : compteur de mots, détecteur des fautes d'Obed (regex), micro (`record()` : dictée Claude, sinon webkitSpeechRecognition + MediaRecorder ; blob URLs libérées, rien n'est envoyé), évaluation IA (`sample.json`) en copie Claude.
+- `modules/writing.js`, `speaking.js`, `listening.js`, `ireading.js` : les 13 types du DET (Interactive Speaking : chrono auto, enregistrement seulement après « Record Now »).
+- `modules/learn.js` : grammaire (10 leçons, `data/grammar.js`), vocabulaire (`data/vocab.js`, lots de 8), dictionnaire au toucher (`.tw`).
+- `modules/exam.js` : diagnostic, examen blanc, section lecture. Estimation = fonction du taux de réussite et du volume (indicateur, pas un score officiel).
+- `modules/extras.js` : histoire à Windsor (3 épisodes), Memory, appel en direct (IA, copie Claude uniquement), carte des 24 unités (les unités réutilisent les modules génériques), badges.
+- Scènes « photo » : SVG dessinés (`data/scenes.js`), pas de photos externes.
+- Pas fait : cinéma (vidéos sous licence libre à vérifier une par une), voix neuronales pré-enregistrées, banque Read and Select de 600 mots, 1 500 mots de vocabulaire.
+
 ## Ajouter un module
 1. Créer `js/modules/xxx.js` qui expose `App.modules.xxx`, et utilise `App.runner.open({render, dirty, onClose})`.
 2. L'ajouter dans `index.html` et dans `FILES` de `sw.js`, puis **changer `CACHE`** dans `sw.js`.

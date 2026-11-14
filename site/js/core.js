@@ -1,8 +1,16 @@
 /* DET Prep — cœur : stockage, répétition espacée, carnet d'erreurs, interface, voix, sauvegarde. */
 (function () {
   'use strict';
-  const VERSION = '1.2.0';
+  const VERSION = '1.3.0';
   const CHANGELOG = [
+    ['1.3.0', '15 nov. 2026', [
+      'Examen blanc complet (≈ 1 h, ordre officiel) et diagnostic (≈ 15 min), avec une estimation sur 160 par compétence.',
+      'Grammaire C1 : 10 leçons (Comprendre → Écouter → Exercices → À dire) avec les pièges de francophone.',
+      'Vocabulaire académique : 128 mots en lots de 8, quiz avec révision des mots faibles.',
+      'Dictionnaire : touche un mot dans l\'histoire pour sa traduction, l\'écouter et l\'ajouter à tes mots.',
+      'Histoire à Windsor (3 épisodes, tu joues Obed au micro), Memory, appel en direct avec Claude (copie Claude).',
+      'Carte du parcours en 24 unités, badges, courbes par compétence dans Progrès.'
+    ]],
     ['1.2.0', '15 nov. 2026', [
       'Écriture : Writing Sample, Interactive Writing, Write About the Photo, avec compteur de mots, objectif et rythme en direct.',
       'Détecteur de TES fautes (adjectifs en -s, majuscules, that why, raise/rise, calques, phrase d\'annonce…) après chaque écrit.',
@@ -179,6 +187,7 @@
         if (!(await ask('Quitter ? Ce que tu as déjà fait est gardé.', 'Quitter'))) return;
       }
       if (!RUN) return;
+      if (!force && App.onQuit) { const q = App.onQuit; App.onQuit = null; q(); }
       const m = RUN; RUN = null; this.timer(null);
       $('#runner').classList.remove('on'); document.body.style.overflow = '';
       $('#rBody').innerHTML = ''; $('#rFoot').innerHTML = '';
@@ -296,7 +305,7 @@
   function refresh() { renderHeader(); if (pages[current]) pages[current]($('#p-' + current)); }
 
   function boot() {
-    load(); applySettings(); renderHeader();
+    load(); if (S.settings.realKeep != null) { S.settings.reread = S.settings.realKeep; S.settings.realKeep = null; } applySettings(); renderHeader();
     matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applySettings);
     $$('#tabs button').forEach(b => b.onclick = () => show(b.dataset.tab));
     $('#rClose').onclick = () => runner.close();
