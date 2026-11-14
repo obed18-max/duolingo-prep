@@ -1,8 +1,17 @@
 /* DET Prep — cœur : stockage, répétition espacée, carnet d'erreurs, interface, voix, sauvegarde. */
 (function () {
   'use strict';
-  const VERSION = '1.1.0';
+  const VERSION = '1.2.0';
   const CHANGELOG = [
+    ['1.2.0', '15 nov. 2026', [
+      'Écriture : Writing Sample, Interactive Writing, Write About the Photo, avec compteur de mots, objectif et rythme en direct.',
+      'Détecteur de TES fautes (adjectifs en -s, majuscules, that why, raise/rise, calques, phrase d\'annonce…) après chaque écrit.',
+      'Oral : Interactive Speaking avec le bouton Record Now (oubli = 0), Speak About the Photo, Read Then Speak, Speaking Sample.',
+      'Shadowing et prononciation (th, h, ship/sheep, accent de mot, -ed). Ton enregistrement reste sur ton téléphone.',
+      'Écoute : Listen and Type (3 écoutes, correction mot à mot) et Interactive Listening (compléter, répondre, résumer).',
+      'Interactive Reading : 5 tâches, chrono partagé de 7 min 30.',
+      'Plan du jour en 6 étapes qui alterne lecture, écrit, oral et écoute.'
+    ]],
     ['1.1.0', '15 nov. 2026', [
       'Copie dans Claude : voix Claude, bouton « 🤖 Explique-moi » sur chaque erreur, sauvegarde automatique.',
       'Fenêtres de confirmation intégrées à l\'app (au lieu de celles du navigateur).',
@@ -98,7 +107,8 @@
     grammaire: ['Grammaire', '📐'],
     'faux-ami': ['Faux ami', '🎭'],
     cognat: ['Cognat non reconnu', '🔍'],
-    remplissage: ['Phrase de remplissage', '🫧']
+    remplissage: ['Phrase de remplissage / piège', '🫧'],
+    ponctuation: ['Ponctuation', '❗']
   };
   function logError(e) {
     S.errors.push(Object.assign({ t: Date.now(), d: today() }, e));
@@ -204,14 +214,19 @@
     } catch (e) { }
   }
   function voices() { return (window.speechSynthesis && speechSynthesis.getVoices().filter(v => /^en[-_]/i.test(v.lang))) || []; }
+  // Lire un texte à voix haute. opts.onend : appelé à la fin (ou tout de suite si aucune voix)
   function speak(text, opts = {}) {
-    if (App.ai && App.ai.tts && App.ai.tts(text, opts)) return; // voix Claude dans l'artifact
-    if (!window.speechSynthesis) { toast('Voix indisponible sur ce navigateur'); return; }
+    const end = () => { if (opts.onend) { const f = opts.onend; opts.onend = null; f(); } };
+    if (App.ai && App.ai.tts && App.ai.tts(text, opts, end)) return;
+    if (!window.speechSynthesis) { toast('Voix indisponible sur ce navigateur'); setTimeout(end, 1500); return; }
     speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text);
-    const vs = voices(); const v = vs.find(x => x.name === S.settings.voice) || vs.find(x => /en-US/i.test(x.lang)) || vs[0];
+    const vs = voices(); const v = (opts.voice && vs.find(x => x.name === opts.voice)) || vs.find(x => x.name === S.settings.voice) || vs.find(x => /en-US/i.test(x.lang)) || vs[0];
     if (v) { u.voice = v; u.lang = v.lang; } else u.lang = 'en-US';
     u.rate = opts.rate || S.settings.rate;
+    u.onend = end; u.onerror = end;
+    // sécurité : certains navigateurs n'envoient jamais onend
+    setTimeout(end, 1500 + text.length * 90 / (u.rate || 1));
     speechSynthesis.speak(u);
   }
   const MASCOT = `<svg class="mascot" viewBox="0 0 64 64" aria-hidden="true"><ellipse cx="32" cy="36" rx="24" ry="22" fill="#5ac8fa"/><ellipse cx="32" cy="42" rx="14" ry="11" fill="#e0f6ff"/><circle cx="23" cy="30" r="7" fill="#fff"/><circle cx="41" cy="30" r="7" fill="#fff"/><circle cx="24" cy="31" r="3.4" fill="#1c1c1e"/><circle cx="42" cy="31" r="3.4" fill="#1c1c1e"/><path d="M28 40q4 4 8 0" stroke="#1c1c1e" stroke-width="2.4" fill="none" stroke-linecap="round"/><path d="M14 20l6 6M50 20l-6 6" stroke="#5ac8fa" stroke-width="5" stroke-linecap="round"/><circle cx="13" cy="18" r="3.5" fill="#ffcc00"/><circle cx="51" cy="18" r="3.5" fill="#ffcc00"/></svg>`;

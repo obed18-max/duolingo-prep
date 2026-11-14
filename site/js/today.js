@@ -4,19 +4,40 @@
   const A = App, esc = A.esc;
 
   function plan() {
-    const fam = A.modules.faults.nextFamily();
-    const rc = A.modules.review.counts();
-    const dayN = A.daysBetween(A.S.created, A.today());
-    const disc = [
-      { id: 'disc', icon: '🔍', name: 'Cognats', sub: 'Read and Select au chrono (5 s/mot)', min: 4, run: d => A.modules.cognates.readSelect({ onDone: d }) },
-      { id: 'disc', icon: '🎭', name: 'Faux amis', sub: 'actually, eventually, library…', min: 4, run: d => A.modules.cognates.falseFriends({ onDone: d }) }
-    ][dayN % 2];
+    const M = A.modules, fam = M.faults.nextFamily(), rc = M.review.counts();
+    const dayN = Math.max(0, A.daysBetween(A.S.created, A.today()));
+    const rot = (arr, k = 0) => arr[(dayN + k) % arr.length];
+    const read = rot([
+      { name: 'Fill in the Blanks + Read and Complete', short: 'Lecture', icon: '✍️', sub: '6 phrases + 1 paragraphe', min: 7, run: d => M.ctest.fib({ n: 6, onDone: () => M.ctest.rac({ n: 1, onDone: d }) }) },
+      { name: 'Interactive Reading', short: 'Lecture', icon: '📖', sub: '1 texte, 5 tâches, 7 min 30', min: 8, run: d => M.ireading.run({ onDone: d }) },
+      { name: 'Read and Complete', short: 'Lecture', icon: '📄', sub: '2 paragraphes · 3 min', min: 7, run: d => M.ctest.rac({ onDone: d }) }
+    ]);
+    const prod = rot([
+      { name: 'Writing Sample', short: 'Écrit', icon: '📝', sub: '30 s de préparation, 5 min, objectif 140 mots', min: 9, run: d => M.writing.sample({ onDone: d }) },
+      { name: 'Interactive Speaking', short: 'Oral', icon: '🎙️', sub: '6–8 questions · 35 s · Record Now !', min: 8, run: d => M.speaking.interactive({ onDone: d }) },
+      { name: 'Interactive Writing', short: 'Écrit', icon: '📝', sub: '5 min + 3 min', min: 10, run: d => M.writing.interactive({ onDone: d }) },
+      { name: 'Photo : écrire puis parler', short: 'Photo', icon: '🖼️', sub: 'Write (1 min) + Speak (90 s)', min: 6, run: d => M.writing.photo({ onDone: () => M.speaking.photo({ onDone: d }) }) },
+      { name: 'Read, Then Speak', short: 'Oral', icon: '🗣️', sub: '20 s de préparation, 90 s', min: 4, run: d => M.speaking.readThenSpeak({ onDone: d }) },
+      { name: 'Speaking Sample', short: 'Oral', icon: '🎥', sub: '30 s de préparation, 3 min', min: 5, run: d => M.speaking.sampleTalk({ onDone: d }) }
+    ]);
+    const listen = rot([
+      { name: 'Listen and Type', short: 'Écoute', icon: '🎧', sub: '6 phrases · 3 écoutes max', min: 6, run: d => M.listening.listenType({ onDone: d }) },
+      { name: 'Interactive Listening', short: 'Écoute', icon: '💬', sub: 'compléter, répondre, résumer', min: 9, run: d => M.listening.interactive({ onDone: d }) }
+    ]);
+    const disc = rot([
+      { name: 'Cognats', icon: '🔍', sub: 'Read and Select au chrono (5 s/mot)', min: 4, run: d => M.cognates.readSelect({ onDone: d }) },
+      { name: 'Shadowing', icon: '🔁', sub: 'écoute, répète, compare', min: 5, run: d => M.speaking.shadowing({ onDone: d }) },
+      { name: 'Faux amis', icon: '🎭', sub: 'actually, eventually, library…', min: 4, run: d => M.cognates.falseFriends({ onDone: d }) },
+      { name: 'Prononciation', icon: '👄', sub: 'th, h, ship/sheep, accent de mot', min: 4, run: d => M.speaking.pronunciation({ onDone: d }) },
+      { name: 'Amorces de phrases', icon: '🧱', sub: 'pour écrire plus vite', min: 3, run: d => M.writing.starters({ onDone: d }) }
+    ]);
     return [
-      { id: 'rev', icon: '🔁', name: 'Révision', short: 'Révision', sub: rc.total ? rc.total + ' rappels dus + mini-quiz' : 'Mini-quiz mélangé', min: 5, run: d => A.modules.review.start({ onDone: d }) },
-      { id: 'lesson', icon: fam.icon, name: 'Mes fautes', short: 'Fautes', sub: fam.title, min: 6, run: d => A.modules.faults.family(fam, { onDone: d }) },
-      { id: 'fib', icon: '✍️', name: 'Fill in the Blanks', short: 'Fill', sub: '9 phrases · 20 s chacune', min: 5, run: d => A.modules.ctest.fib({ onDone: d }) },
-      { id: 'rac', icon: '📄', name: 'Read and Complete', short: 'Complete', sub: '2 paragraphes · 3 min chacun', min: 8, run: d => A.modules.ctest.rac({ onDone: d }) },
-      disc
+      { id: 'rev', icon: '🔁', name: 'Révision', short: 'Révision', sub: rc.total ? rc.total + ' rappels dus + mini-quiz' : 'Mini-quiz mélangé', min: 5, run: d => M.review.start({ onDone: d }) },
+      { id: 'lesson', icon: fam.icon, name: 'Mes fautes', short: 'Fautes', sub: fam.title, min: 5, run: d => M.faults.family(fam, { onDone: d }) },
+      Object.assign({ id: 'read' }, read),
+      Object.assign({ id: 'prod' }, prod),
+      Object.assign({ id: 'listen' }, listen),
+      Object.assign({ id: 'disc', short: 'Découverte' }, disc)
     ];
   }
   function isComplete() { const d = A.day(); return plan().every(s => d.done[s.id]); }

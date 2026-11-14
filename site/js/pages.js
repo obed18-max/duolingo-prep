@@ -27,18 +27,40 @@
         ${row('📚', 'Cognats & faux amis : la liste', '', 'data-a="cogl"')}
         ${row('🧱', 'Amorces de phrases', 'pour écrire plus vite (Writing Sample)', 'data-a="starters"')}
       </div>
-      <div class="sect">Bientôt (prochaines étapes)</div>
-      <div class="list" style="opacity:.55">
-        ${row('🎧', 'Listen and Type, Interactive Listening', '', 'disabled')}
-        ${row('📝', 'Écriture : compteur de mots + objectif', 'Write About the Photo, Interactive Writing, Writing Sample', 'disabled')}
-        ${row('🎙️', 'Oral : Interactive Speaking, Photo, Speaking Sample', '', 'disabled')}
-        ${row('🗺️', 'Carte en 24 unités, histoire à Windsor', '', 'disabled')}
+      <div class="sect">Écriture · objectif de mots affiché</div>
+      <div class="list">
+        ${row('📝', 'Writing Sample', '30 s + 5 min · objectif 140 mots', 'data-a="wsample"')}
+        ${row('💬', 'Interactive Writing', '5 min + 3 min', 'data-a="iwrite"')}
+        ${row('🖼️', 'Write About the Photo', '1 min', 'data-a="wphoto"')}
+        ${row('🧱', 'Amorces : entraînement', 'retrouver le mot manquant', 'data-a="stdrill"')}
+        ${row('⌨️', 'Vitesse de frappe', '1 minute chrono', 'data-a="typing"')}
+      </div>
+      <div class="sect">Oral · le micro reste sur ton téléphone</div>
+      <div class="list">
+        ${row('🎙️', 'Interactive Speaking', '6–8 questions · 35 s · Record Now', 'data-a="ispeak"')}
+        ${row('🖼️', 'Speak About the Photo', '20 s + 90 s', 'data-a="sphoto"')}
+        ${row('🗣️', 'Read, Then Speak', '20 s + 90 s', 'data-a="rts"')}
+        ${row('🎥', 'Speaking Sample', '30 s + 3 min', 'data-a="ssample"')}
+        ${row('🔁', 'Shadowing', 'écoute, répète, compare', 'data-a="shadow"')}
+        ${row('👄', 'Prononciation', 'th, h, voyelles, accent de mot, -ed', 'data-a="pron"')}
+      </div>
+      <div class="sect">Écoute et lecture interactive</div>
+      <div class="list">
+        ${row('🎧', 'Listen and Type', '3 écoutes · 1 min', 'data-a="ltype"')}
+        ${row('💬', 'Interactive Listening', 'compléter, répondre, résumer', 'data-a="ilisten"')}
+        ${row('📖', 'Interactive Reading', '5 tâches · 7 min 30', 'data-a="iread"')}
       </div>`;
     const M = A.modules;
-    const act = { fib: () => M.ctest.fib(), rac: () => M.ctest.rac({ n: 1 }), rs: () => M.cognates.readSelect(), tfib: () => M.lessons.tips('fib', 'Fill in the Blanks : la méthode'), trac: () => M.lessons.tips('rac', 'Read and Complete : la méthode'), mix: () => M.faults.mixed(), ff: () => M.cognates.falseFriends(), col: () => M.lessons.collocs(), cogl: () => M.cognates.sheet(), starters: starters };
+    const act = { fib: () => M.ctest.fib(), rac: () => M.ctest.rac({ n: 1 }), rs: () => M.cognates.readSelect(), tfib: () => M.lessons.tips('fib', 'Fill in the Blanks : la méthode'), trac: () => M.lessons.tips('rac', 'Read and Complete : la méthode'), mix: () => M.faults.mixed(), ff: () => M.cognates.falseFriends(), col: () => M.lessons.collocs(), cogl: () => M.cognates.sheet(), starters: starters,
+      wsample: () => M.writing.sample(), iwrite: () => M.writing.interactive(), wphoto: () => M.writing.photo(), stdrill: () => M.writing.starters(), typing: () => M.writing.typing(),
+      ispeak: () => M.speaking.interactive(), sphoto: () => M.speaking.photo(), rts: () => M.speaking.readThenSpeak(), ssample: () => M.speaking.sampleTalk(), shadow: () => M.speaking.shadowing(), pron: pronPick,
+      ltype: () => M.listening.listenType(), ilisten: () => M.listening.interactive(), iread: () => M.ireading.run() };
     A.$$('[data-a]', el).forEach(b => b.onclick = act[b.dataset.a]);
     A.$$('[data-f]', el).forEach(b => b.onclick = () => M.faults.family(FAULTS[+b.dataset.f]));
   };
+  function pronPick() {
+    A.sheet(`<div class="shd"><h2>👄 Prononciation</h2>${close}</div><div class="list">${A.modules.speaking.PRON.map((p, k) => row('🔊', esc(p[0]), esc(p[1]), 'data-p="' + k + '"')).join('')}</div>`, b => A.$$('[data-p]', b).forEach(x => x.onclick = () => { A.closeSheet(); A.modules.speaking.pronunciation({ set: +x.dataset.p }); }));
+  }
   function starters() {
     A.sheet(`<div class="shd"><h2>🧱 Amorces de phrases</h2>${close}</div>
       <p>Tu tapes environ 30 mots/minute : ton plafond au Writing Sample est ~150 mots. Les amorces apprises par cœur te font gagner du temps de réflexion.</p>

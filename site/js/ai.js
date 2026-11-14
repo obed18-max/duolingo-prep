@@ -12,15 +12,20 @@
   // Voix Claude (pas sur Safari / apps mobiles : retombe sur la voix du navigateur)
   use('tts').then(t => {
     if (!t) return;
-    A.ai.tts = (text, opts = {}) => {
-      t.speak(text, { language: 'en', rate: opts.rate || A.S.settings.rate }).catch(e => {
+    A.ai.tts = (text, opts = {}, end) => {
+      const o = { language: 'en', rate: Math.max(.7, Math.min(1.5, opts.rate || A.S.settings.rate)) };
+      if (opts.claudeVoice) o.voice = opts.claudeVoice;
+      t.speak(text, o).then(() => end && end()).catch(e => {
         if (e && e.code === 'not_granted') A.ai.tts = null;
         // repli : voix du navigateur
-        const keep = A.ai.tts; A.ai.tts = null; A.speak(text, opts); A.ai.tts = keep;
+        const keep = A.ai.tts; A.ai.tts = null; A.speak(text, Object.assign({}, opts, { onend: end })); A.ai.tts = keep;
       });
       return true;
     };
   });
+
+  // Micro (dictée Claude)
+  use('dictation').then(d => { if (d) A.ai.dict = d; });
 
   // IA : explications personnalisées des erreurs
   use('sample').then(s => {
