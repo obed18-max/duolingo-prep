@@ -1,8 +1,13 @@
 /* DET Prep — cœur : stockage, répétition espacée, carnet d'erreurs, interface, voix, sauvegarde. */
 (function () {
   'use strict';
-  const VERSION = '1.0.0';
+  const VERSION = '1.1.0';
   const CHANGELOG = [
+    ['1.1.0', '15 nov. 2026', [
+      'Copie dans Claude : voix Claude, bouton « 🤖 Explique-moi » sur chaque erreur, sauvegarde automatique.',
+      'Fenêtres de confirmation intégrées à l\'app (au lieu de celles du navigateur).',
+      'Les trous sont soulignés lettre par lettre, comme au vrai test.'
+    ]],
     ['1.0.0', '15 nov. 2026', [
       'Squelette de l\'app : Aujourd\'hui, Parcours, Examen, Progrès, Plus (thème clair/sombre, installable).',
       'Fill in the Blanks (20 s) et Read and Complete (3 min) avec correction lettre par lettre.',
@@ -138,6 +143,17 @@
     $('#scrim').classList.add('on'); $('#sheet').classList.add('on'); $('#sheet').scrollTop = 0;
     if (onMount) onMount($('#sheetBody'));
   }
+  // Remplace confirm() (bloqué dans Claude) : feuille avec deux boutons
+  function ask(msg, okLabel = 'Oui', danger) {
+    return new Promise(res => {
+      let done = false; const fin = v => { if (done) return; done = true; closeSheet(); $('#scrim').removeEventListener('click', no); res(v); };
+      const no = () => fin(false);
+      sheet(`<h3 style="margin-top:6px">${esc(msg)}</h3><div class="btns" style="margin-top:14px"><button class="btn sec" id="askNo">Annuler</button><button class="btn ${danger ? 'red' : ''}" id="askYes">${esc(okLabel)}</button></div>`, b => {
+        $('#askNo', b).onclick = no; $('#askYes', b).onclick = () => fin(true);
+      });
+      $('#scrim').addEventListener('click', no);
+    });
+  }
   function closeSheet() { $('#scrim').classList.remove('on'); $('#sheet').classList.remove('on'); }
 
   // Lecteur plein écran. Un module fournit {title, render(body, foot), onClose}
@@ -147,11 +163,12 @@
       RUN = mod; $('#runner').classList.add('on'); document.body.style.overflow = 'hidden';
       this.progress(0); this.timer(null); mod.render($('#rBody'), $('#rFoot'));
     },
-    close(force) {
+    async close(force) {
       if (!RUN) return;
       if (!force && RUN.dirty && RUN.dirty()) {
-        if (!confirm('Quitter ? Ce que tu as déjà fait est gardé.')) return;
+        if (!(await ask('Quitter ? Ce que tu as déjà fait est gardé.', 'Quitter'))) return;
       }
+      if (!RUN) return;
       const m = RUN; RUN = null; this.timer(null);
       $('#runner').classList.remove('on'); document.body.style.overflow = '';
       $('#rBody').innerHTML = ''; $('#rFoot').innerHTML = '';
@@ -285,7 +302,7 @@
     VERSION, CHANGELOG, CATS, INT,
     get S() { return S; }, save, day, today, addDays, daysBetween, esc, shuffle, pick, seededShuffle, $, $$, h,
     srs, logError, topErrors, addPoints, record, markStep,
-    toast, sheet, closeSheet, runner, beep, speak, voices, mascot, confetti,
+    toast, sheet, closeSheet, ask, runner, beep, speak, voices, mascot, confetti,
     exportCode, importCode, applySettings, renderHeader,
     show, refresh, boot, pages, current: () => current,
     modules: {}, ai: null, sync: null,

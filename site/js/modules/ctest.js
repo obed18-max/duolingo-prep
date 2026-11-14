@@ -168,7 +168,8 @@
               <p>Ta réponse : <b>${esc(full) || '—'}</b> · Bonne réponse : <b>${esc(p.word)}</b></p>
               <p style="font-size:1.25em">${letterDiff(p.word, typed, pre)}</p>
               <p>${c.why}</p><p>💡 ${it.fr}</p>
-              <button class="btn sec" id="fibLesson" style="margin-top:8px">Revoir la leçon</button></div>`;
+              <button class="btn sec" id="fibLesson" style="margin-top:8px">Revoir la leçon</button>
+              ${A.ai && A.ai.sample ? '<button class="btn sec" id="fibAi" style="margin-top:8px">🤖 Explique-moi</button><div id="fibAiOut"></div>' : ''}</div>`;
             A.logError({ cat: c.cat, src: 'fib', wrong: full, right: p.word, ctx: p.before + p.word + p.after, why: it.fr, ref: 'fib:' + it.id });
             mistakes.push({ wrong: full, right: p.word, ctx: p.before + '___' + p.after });
             // revient dans la séance 3 questions plus tard (une fois)
@@ -180,6 +181,7 @@
           A.$('#fibFb').innerHTML = html + `<button class="btn sec" id="fibSpeak" style="margin-top:8px">▶ Écouter la phrase</button>`;
           A.$('#fibSpeak').onclick = () => A.speak(p.before + p.word + p.after);
           const les = A.$('#fibLesson'); if (les) les.onclick = () => A.modules.lessons.forItem(it);
+          const ai = A.$('#fibAi'); if (ai) ai.onclick = () => { ai.remove(); A.ai.explain(p.before + p.word + p.after, full, p.word, A.$('#fibAiOut')); };
           foot.innerHTML = `<button class="btn ${right ? 'green' : ''}" id="fibNext">Continuer</button>`;
           A.$('#fibNext').onclick = next;
         }
@@ -293,8 +295,10 @@
           A.$('#racFb').innerHTML = `<div class="fb ${pct >= 70 ? 'ok' : 'ko'}"><div style="display:flex;gap:10px;align-items:center">${A.mascot(pct >= 70)}<div><h3>${timeout ? '⏱ Temps écoulé · ' : ''}${ok}/${built.gaps.length} mots justes (${pct} %)</h3></div></div></div>
             ${errs.map(e => `<div class="card"><p style="font-size:1.2em;margin:0">${letterDiff(e.g.word, e.typed, e.g.pre)}</p>
               <p>Tu as écrit <b>${esc(e.full)}</b> → <b>${esc(e.g.word)}</b></p><p class="muted">${e.c.why}</p>
-              <p class="muted">« ${esc(built.sents[e.g.sent])} »</p></div>`).join('')}
+              <p class="muted">« ${esc(built.sents[e.g.sent])} »</p>
+              ${A.ai && A.ai.sample ? `<button class="btn sec" data-ai="${e.g.i}" style="min-height:40px">🤖 Explique-moi</button><div id="aiOut${e.g.i}"></div>` : ''}</div>`).join('')}
             ${errs.length ? '<p class="muted">Ces mots reviennent demain en révision, dans leur phrase.</p>' : ''}`;
+          A.$$('[data-ai]', body).forEach(b => b.onclick = () => { const e = errs.find(x => x.g.i === +b.dataset.ai); b.remove(); A.ai.explain(built.sents[e.g.sent], e.full, e.g.word, A.$('#aiOut' + e.g.i)); });
           foot.innerHTML = `<button class="btn" id="racNext">${round + 1 < rounds ? 'Paragraphe suivant' : 'Voir le bilan'}</button>`;
           A.$('#racNext').onclick = () => { round++; mod.render(body, foot); A.$('#rBody').scrollTop = 0; };
         }

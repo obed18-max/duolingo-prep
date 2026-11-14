@@ -62,11 +62,11 @@
       <details><summary>📋 Règles du jour J</summary><ul>${DET.rules.map(r => `<li style="margin:8px 0">${esc(r)}</li>`).join('')}</ul></details>
       <p class="muted">Sources : Duolingo, Questions Guide 2026 et Scoring Guide 2026. Les scores de l'app sont des estimations d'entraînement, jamais des scores officiels.</p>`;
     A.$$('[data-c]', el).forEach(c => c.onchange = () => { A.S.checklist[c.dataset.c] = c.checked; A.save(); A.pages.exam(el); });
-    A.$('[data-a="official"]', el).onclick = () => window.open(DET.practiceUrl, '_blank', 'noopener');
+    A.$('[data-a="official"]', el).outerHTML = A.$('[data-a="official"]', el).outerHTML.replace('<button', '<a href="' + DET.practiceUrl + '" target="_blank" rel="noopener" style="color:inherit;text-decoration:none"').replace('</button>', '</a>');
     A.$('[data-a="real"]', el).onclick = realReading;
   };
-  function realReading() {
-    if (!confirm('Conditions réelles : chrono officiel, pas de relecture guidée, pas de retour en arrière. Environ 15 minutes. On y va ?')) return;
+  async function realReading() {
+    if (!(await A.ask('Conditions réelles : chrono officiel, pas de relecture guidée, pas de retour en arrière. Environ 15 minutes. On y va ?', 'Commencer'))) return;
     const keep = A.S.settings.reread; A.S.settings.reread = false;
     const restore = () => { A.S.settings.reread = keep; A.save(); };
     A.modules.cognates.readSelect({ n: 15, onDone: () => A.modules.ctest.fib({ n: 7, onDone: () => A.modules.ctest.rac({ n: 3, onDone: restore }) }) });
@@ -128,15 +128,15 @@
     A.sheet(`<div class="shd"><h2>💾 Sauvegarde</h2>${close}</div>
       <p>Copie ce code dans tes notes une fois par semaine. Colle-le sur un autre appareil pour retrouver ta progression.</p>
       <textarea id="bkTx" readonly style="font-family:ui-monospace,monospace;font-size:12px">Préparation du code…</textarea>
-      <div class="btns" style="margin:10px 0"><button class="btn" id="bkCopy">Copier le code</button><button class="btn sec" id="bkDl">Télécharger</button></div>
+      <div class="btns" style="margin:10px 0"><button class="btn" id="bkCopy">Copier le code</button>${A.inClaude ? '' : '<button class="btn sec" id="bkDl">Télécharger</button>'}</div>
       <h3>Restaurer</h3><textarea id="bkIn" placeholder="Colle ici un code DETZ1:…"></textarea>
       <button class="btn sec" id="bkRestore" style="margin-top:10px">Restaurer ce code</button>`, async b => {
       const code = await A.exportCode(); A.$('#bkTx', b).value = code;
       A.$('#bkCopy', b).onclick = async () => { try { await navigator.clipboard.writeText(code); A.toast('Code copié'); } catch (e) { A.$('#bkTx', b).select(); } };
-      A.$('#bkDl', b).onclick = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([code], { type: 'text/plain' })); a.download = 'det-prep-' + A.today() + '.txt'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000); };
+      if (A.$('#bkDl', b)) A.$('#bkDl', b).onclick = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([code], { type: 'text/plain' })); a.download = 'det-prep-' + A.today() + '.txt'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000); };
       A.$('#bkRestore', b).onclick = async () => {
         const v = A.$('#bkIn', b).value; if (!v.trim()) return;
-        if (!confirm('Remplacer ta progression actuelle par ce code ?')) return;
+        if (!(await A.ask('Remplacer ta progression actuelle par ce code ?', 'Remplacer', true))) return;
         try { await A.importCode(v); A.closeSheet(); A.toast('Progression restaurée'); } catch (e) { A.toast('Code invalide : ' + e.message); }
       };
     });
@@ -178,9 +178,10 @@
     });
   }
 
-  function reset() {
-    if (!confirm('Repartir de zéro ? Toute ta progression sera effacée (fais une sauvegarde avant).')) return;
-    if (!confirm('Vraiment sûr ? Cette action est définitive.')) return;
+  async function reset() {
+    if (!(await A.ask('Repartir de zéro ? Toute ta progression sera effacée (fais une sauvegarde avant).', 'Continuer', true))) return;
+    await new Promise(r => setTimeout(r, 350));
+    if (!(await A.ask('Vraiment sûr ? Cette action est définitive.', 'Tout effacer', true))) return;
     A.reset(true); A.toast('Remis à zéro'); A.show('today');
   }
 })();

@@ -1,8 +1,8 @@
 /* Service worker : met en cache le code et les données (jamais d'enregistrement vocal).
    Changer CACHE à chaque ajout/modif de fichier. */
-const CACHE = 'det-prep-v1.0.1';
+const CACHE = 'det-prep-v1.1.0';
 const FILES = ['./', 'index.html', 'manifest.webmanifest', 'css/app.css',
-  'js/core.js', 'js/today.js', 'js/pages.js',
+  'js/core.js', 'js/ai.js', 'js/today.js', 'js/pages.js',
   'js/modules/ctest.js', 'js/modules/faults.js', 'js/modules/cognates.js', 'js/modules/review.js',
   'js/data/fib.js', 'js/data/rac.js', 'js/data/faults.js', 'js/data/cognates.js', 'js/data/test.js',
   'icons/icon-180.png', 'icons/icon-192.png', 'icons/icon-512.png'];
